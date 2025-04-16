@@ -73,7 +73,7 @@ EC2-Instancee-roadmap.sh/
        <p>This is my simple static website hosted on AWS EC2.</p>
    </body>
    </html>
-   \`\`\`
+   ```
 2. Ensure Nginx is running:
    ```bash
    sudo systemctl status nginx
