@@ -1,64 +1,66 @@
-# EC2 Instance: Deploy a Static Website on AWS
+# Deploy a Static Website on AWS EC2
 
-This project guides you through creating an AWS EC2 instance, setting up an Ubuntu Linux server, and deploying a simple static website using Nginx.
+launching an AWS EC2 instance, setting up an Ubuntu Linux server, and deploying a simple static website using Nginx.
+
+## Prerequisites
+- An AWS account (sign up at [aws.amazon.com](https://aws.amazon.com) if needed).
+- Basic familiarity with terminal commands (on macOS/Linux) or an SSH client like PuTTY (on Windows).
+- A web browser to test the site.
+
+**Note**: While this project uses Free Tier-eligible resources (e.g., t2.micro instance), monitor your AWS usage to avoid unexpected charges. AWS Free Tier limits apply for the first 12 months.
 
 ## Repository Structure
 
 ```
 EC2-Instance-roadmap.sh/
 ├── website/
-│   └── index.html      # Static website HTML file
-└── README.md           # Project documentation
+│   └── index.html      # Sample static website HTML file
+└── README.md           # This documentation file
 ```
 
 ## Setup Instructions
 
-### Step 1: Create an AWS Account
-- If you don’t already have an AWS account, [sign up here](https://aws.amazon.com). The AWS Free Tier includes the `t2.micro` instance used in this project.
-- Log in to the [AWS Management Console](https://console.aws.amazon.com).
+### Step 1: Launch an EC2 Instance
+1. Log in to the [AWS Management Console](https://console.aws.amazon.com).
+2. Navigate to **EC2** under the **Compute** section.
+3. Click **Launch Instances** and configure as follows:
+   - **Name and tags**: Add a name like `My-Ubuntu-Server` for easy identification.
+   - **Application and OS Images (AMI)**: Search for and select **Ubuntu Server 22.04 LTS** (or 20.04 LTS; ensure it's "Free tier eligible").
+   - **Instance type**: Choose `t2.micro` (Free Tier eligible).
+   - **Key pair (login)**: Create a new key pair (e.g., `ubuntu-key`), select `.pem` format, and download it. Store securely.
+   - **Network settings**:
+     - Use default VPC and subnet.
+     - Create a new security group (e.g., `WebServerSG`).
+     - Add inbound rules:
+       - **SSH**: Type: SSH, Protocol: TCP, Port: 22, Source: My IP (for security; use `0.0.0.0/0` if testing from multiple locations, but this is less secure).
+       - **HTTP**: Type: HTTP, Protocol: TCP, Port: 80, Source: `0.0.0.0/0` (for public web access).
+   - **Configure storage**: Keep the default 8 GiB gp2 (General Purpose SSD).
+4. Review and launch the instance.
+5. Wait for the instance status to show "Running" in the EC2 dashboard. Note the **Public IPv4 address** (e.g., `54.123.45.67`).
 
-### Step 2: Launch an EC2 Instance
-1. In the AWS Console, go to **EC2** under the **Compute** section.
-2. Click **Launch Instance** and configure the instance:
-   - **Choose an Amazon Machine Image (AMI)**: Select **Ubuntu Server 20.04 LTS** or **22.04 LTS** (ensure it’s marked "Free Tier Eligible").
-   - **Choose an Instance Type**: Select `t2.micro` (Free Tier eligible).
-   - **Configure Instance Details**: Use the default settings (default VPC and subnet).
-   - **Add Storage**: Keep the default 8 GB General Purpose SSD.
-   - **Add Tags** (optional): Add a tag like `Name: My Ubuntu Server` for easy identification.
-   - **Configure Security Group**:
-     - Create a new security group (e.g., "WebServerSG").
-     - Add rules:
-       - **SSH**: Type: `SSH`, Port: `22`, Source: `My IP` (or `0.0.0.0/0` for unrestricted access, though less secure).
-       - **HTTP**: Type: `HTTP`, Port: `80`, Source: `0.0.0.0/0` (allows public website access).
-   - **Review and Launch**:
-     - Click **Launch**.
-     - In the key pair dialog, select **Create a new key pair**, name it (e.g., `ubuntu-key`), and download the `.pem` file. Store it securely.
-     - Click **Launch Instances**.
-3. Wait for the instance to start (status: "Running"). Note its **Public IPv4 Address** (e.g., `54.123.45.67`).
-
-### Step 3: Connect to the EC2 Instance
-1. On your local machine, open a terminal (macOS/Linux) or an SSH client like PuTTY (Windows).
-2. Set permissions for your key file:
+### Step 2: Connect to the EC2 Instance
+1. On your local machine, open a terminal (macOS/Linux) or PuTTY (Windows).
+2. Set restrictive permissions on your key file:
    ```bash
    chmod 400 /path/to/ubuntu-key.pem
    ```
-3. Connect to the instance via SSH:
+3. Connect via SSH:
    ```bash
    ssh -i /path/to/ubuntu-key.pem ubuntu@<public-ip-address>
    ```
-   - Replace `<public-ip-address>` with your instance’s IP.
-   - If prompted, type `yes` to confirm the connection.
+   - Replace `<public-ip-address>` with your instance's IP.
+   - Accept the host key fingerprint if prompted (`yes`).
 
 **Troubleshooting**:
-- Ensure the instance is running.
-- Verify the security group allows SSH (port 22) from your IP.
-- Check that the key file permissions are correct.
+- Ensure the instance is running and reachable.
+- Verify security group rules allow SSH from your IP.
+- Check key file permissions (must be 400).
+- If using PuTTY, convert `.pem` to `.ppk` format.
 
-### Step 4: Install and Configure Nginx
-1. Update the system packages:
+### Step 3: Install and Configure Nginx
+1. Update package lists and upgrade installed packages:
    ```bash
-   sudo apt update
-   sudo apt upgrade -y
+   sudo apt update && sudo apt upgrade -y
    ```
 2. Install Nginx:
    ```bash
@@ -69,58 +71,71 @@ EC2-Instance-roadmap.sh/
    sudo systemctl start nginx
    sudo systemctl enable nginx
    ```
-4. Verify Nginx is running:
+4. Verify Nginx status:
    ```bash
    sudo systemctl status nginx
    ```
-   - Look for "active (running)" in the output.
+   - Look for "Active: active (running)".
 
-### Step 5: Deploy the Static Website
-1. **Option 1**: Clone this repository (if hosted on GitHub):
-   - Install Git: `sudo apt install git -y`
-   - Clone the repo: `git clone https://github.com/chintanboghara/EC2-Instance-roadmap.sh.git`
-   - Copy the HTML file: `sudo cp EC2-Instance-roadmap.sh/website/index.html /var/www/html/index.html`
+**Troubleshooting**: If installation fails, retry `sudo apt update`. Ensure you're connected as the `ubuntu` user.
 
-2. **Option 2**: Manually create the HTML file:
-   - Edit the default web file:
-     ```bash
-     sudo nano /var/www/html/index.html
-     ```
-   - Add this content:
-     ```html
-     <!DOCTYPE html>
-     <html lang="en">
-     <head>
-         <meta charset="UTF-8">
-         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-         <title>My Static Website</title>
-     </head>
-     <body>
-         <h1>Hello, World!</h1>
-         <p>This is my simple static website hosted on AWS EC2.</p>
-     </body>
-     </html>
-     ```
-   - Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X`).
+### Step 4: Deploy the Static Website
+Choose one option below.
 
-3. Ensure Nginx is running:
+#### Option 1: Clone This Repository (Recommended)
+1. Install Git:
    ```bash
-   sudo systemctl status nginx
+   sudo apt install git -y
+   ```
+2. Clone the repository:
+   ```bash
+   git clone https://github.com/chintanboghara/EC2-Instance-roadmap.git
+   ```
+   (Adjust the URL if your repo differs.)
+3. Copy the sample HTML file to Nginx's web directory:
+   ```bash
+   sudo cp EC2-Instance-roadmap/website/index.html /var/www/html/index.html
    ```
 
-### Step 6: Access the Website
-1. Open a web browser on your local machine.
-2. Enter `http://<public-ip-address>` in the address bar.
+#### Option 2: Manually Create the HTML File
+1. Edit the default index file:
+   ```bash
+   sudo nano /var/www/html/index.html
+   ```
+2. Paste the following content:
+   ```html
+   <!DOCTYPE html>
+   <html lang="en">
+   <head>
+       <meta charset="UTF-8">
+       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <title>My Static Website</title>
+   </head>
+   <body>
+       <h1>Hello, World!</h1>
+       <p>This is my simple static website hosted on AWS EC2.</p>
+   </body>
+   </html>
+   ```
+3. Save and exit (in nano: Ctrl+O, Enter, Ctrl+X).
+
+4. Restart Nginx to apply changes:
+   ```bash
+   sudo systemctl restart nginx
+   ```
+
+### Step 5: Access the Website
+1. Open a web browser.
+2. Visit `http://<public-ip-address>`.
 3. You should see the "Hello, World!" page.
 
 **Troubleshooting**:
-- If the page doesn’t load, check:
-  - Nginx is running (`sudo systemctl status nginx`).
-  - The security group allows HTTP traffic (port 80).
-  - The `index.html` file is in `/var/www/html/`.
+- Page not loading? Check Nginx status, security group (HTTP port 80 open), and file location (`/var/www/html/index.html`).
+- Use `curl http://localhost` on the instance to test locally.
+- If the IP changes (e.g., after reboot), check the EC2 dashboard for the new public IP.
 
 ## Cleanup
-To avoid unnecessary AWS charges:
-1. Go to the EC2 dashboard in the AWS Console.
-2. Select the instance.
-3. Click **Instance State** > **Terminate Instance**.
+To avoid charges:
+1. In the EC2 dashboard, select your instance.
+2. Choose **Instance state** > **Terminate instance**.
+3. Confirm termination. This deletes the instance and stops billing (data on the root volume is lost unless snapshotted).
